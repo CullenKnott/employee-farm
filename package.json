@@ -1,0 +1,26 @@
+{
+  "name": "employee-farm",
+  "version": "1.0.0",
+  "description": "A CLI that is used as a content management system (CMS) to track and store employee information",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CullenKnott/employee-farm.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CullenKnott/employee-farm/issues"
+  },
+  "homepage": "https://github.com/CullenKnott/employee-farm#readme",
+  "dependencies": {
+    "inquirer": "^8.2.4",
+    "mysql2": "^3.5.2",
+    "asciiart-logo": "^0.2.6",
+    "console.table": "^0.10.0"
+
+  }
+}
