@@ -63,3 +63,23 @@ function prompt() {
       }
     });
 }
+
+function viewAllEmployees() {
+  db.query("SELECT * FROM employee", function (err, res) {
+    err ? console.log(err) : console.table(res), prompt();
+  });
+}
+
+function viewAllDepartments() {
+  db.query("SELECT * FROM department", function (err, res) {
+    err ? console.log(err) : console.table(res), prompt();
+  });
+}
+
+function viewAllRoles() {
+  db.query("SELECT * FROM role", function (err, res) {
+    err ? console.log(err) : console.table(res), prompt();
+  });
+}
+
+prompt();
