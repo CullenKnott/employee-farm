@@ -1,8 +1,10 @@
+// dependencies
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const logo = require("asciiart-logo");
 require("console.table");
 
+// create connection to the database
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -10,6 +12,7 @@ const db = mysql.createConnection({
   database: "employee_db",
 });
 
+// function that prompts the user
 function prompt() {
   const logoText = logo({
     name: "Employee Farm",
@@ -33,6 +36,7 @@ function prompt() {
         ],
       },
     ])
+    // call function based on user response
     .then((choices) => {
       let inquirerChoices = choices.message;
       switch (inquirerChoices) {
@@ -64,6 +68,7 @@ function prompt() {
     });
 }
 
+// View all employees in database
 function viewAllEmployees() {
   db.query(
     "SELECT employee.first_name, employee.last_name, role.title, role.salary, department.department_name, CONCAT(e.first_name, ' ' ,e.last_name) AS Manager FROM employee INNER JOIN role on role.id = employee.role_id INNER JOIN department on department.id = role.department_id left join employee e on employee.manager_id = e.id;",
@@ -72,19 +77,19 @@ function viewAllEmployees() {
     }
   );
 }
-
+// View all departments in database
 function viewAllDepartments() {
   db.query("SELECT * FROM department", function (err, res) {
     err ? console.log(err) : console.table(res), prompt();
   });
 }
-
+// View all roles in database
 function viewAllRoles() {
   db.query("SELECT * FROM role", function (err, res) {
     err ? console.log(err) : console.table(res), prompt();
   });
 }
-
+// add a new department to the database
 function addDepartment() {
   inquirer
     .prompt([
@@ -104,7 +109,7 @@ function addDepartment() {
       );
     });
 }
-
+// add a new role; choose salary and department for new role
 function addRole() {
   db.query("SELECT * FROM department", function (err, res) {
     if (err) {
@@ -154,7 +159,7 @@ function addRole() {
       });
   });
 }
-
+// add employee to database; prompts for employee first_name, last_name, role title, and manager
 function addEmployee() {
   let f_name, l_name, roleName, managerId;
   inquirer
@@ -173,10 +178,9 @@ function addEmployee() {
     .then((response) => {
       f_name = response.firstName;
       l_name = response.lastName;
-      return db.promise().query("SELECT * FROM role");
+      return db.promise().query("SELECT * FROM role"); // pull data from roles table
     })
     .then((roleData) => {
-      console.log(roleData);
       const roleChoices = roleData[0].map((role) => ({
         value: role.id,
         name: role.title,
@@ -212,9 +216,7 @@ function addEmployee() {
     })
     .then((response) => {
       managerId = response.manager;
-      console.log(
-        `Employee added: ${f_name} ${l_name}`
-      );
+      console.log(`Employee added: ${f_name} ${l_name}`);
       db.query(
         `INSERT INTO employee
         (first_name, last_name, role_id, manager_id)
@@ -229,52 +231,61 @@ function addEmployee() {
       );
     });
 }
-
-// 2 more add functions
-// update function
+// update an existing employee; prompts for employee to change, and what new role to give.
+function updateEmployee() {
+  let empName, newRole;
+  db.query("SELECT * FROM employee", function (err, res) {
+    if (err) {
+      console.log(err);
+      return prompt();
+    }
+    const empChoices = res.map((employee) => ({
+      value: employee.id,
+      name: `${employee.first_name} ${employee.last_name}`,
+    }));
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "employee",
+          message: "Choose an employee you would like to update.",
+          choices: empChoices,
+        },
+      ])
+      .then((empResponse) => {
+        empName = empResponse.employee;
+        return db.promise().query("SELECT * FROM role");
+      })
+      .then((updateRole) => {
+        const roleChoices = updateRole[0].map((role) => ({
+          value: role.id,
+          name: role.title,
+        }));
+        return inquirer.prompt([
+          {
+            type: "list",
+            name: "roleChange",
+            message: "Choose a new role for the selected employee.",
+            choices: roleChoices,
+          },
+        ]);
+      })
+      .then((response) => {
+        newRole = response.roleChange;
+        console.log(`${empName}'s role has been changed to ${newRole}!`);
+        db.query(
+          `UPDATE employee SET role_id = ${newRole} WHERE id = ${empName}`,
+          function (err, res) {
+            err ? console.log(err) : viewAllEmployees(), prompt();
+          }
+        );
+      });
+  });
+}
+// quits out of the CLI app via exiting Node.js
+function quit() {
+  console.log("Goodbye");
+  return process.exit(1);
+}
 
 prompt();
-
-// function addARole() {
-//   db.query("SELECT * FROM department_list", function(err, results) {
-//     if (err) {
-//       console.log(err);
-//       return workTime();
-//     }
-//     const departmentChoices = results.map(department => ({
-//       value: department.id,
-//       name: department.dept_name
-//     }));
-//     inquirer.prompt([
-//       {
-//         type: "input",
-//         name: "addARole",
-//         message: "Enter a Role Dood."
-//       },
-//       {
-//         type: "input",
-//         name: "salary",
-//         message: "how much this joker making?"
-//       },
-//       {
-//         type: "list",
-//         name: "deptId",
-//         message: "witch department does this belong to?",
-//         choices: departmentChoices
-//       }
-// ]).then((inquirerResponse)=> {
-//     console.log("Role added:  " + inquirerResponse.addARole)
-//     let departmentId = inquirerResponse.deptId;
-//     let roleName = inquirerResponse.addARole;
-//     let roleSalary = inquirerResponse.salary;
-//     db.query(`INSERT INTO
-//              role_list
-//              (title, salary, department_list_id)
-//              VALUES
-//              ('${roleName}',
-//             '${roleSalary}',
-//             '${departmentId}')`, function(err, results){
-//       (err) ? console.log(err) : console.table(`Added:  ${roleName}!!!!`,results) , workTime()
-//     })
-//   })
-// });
