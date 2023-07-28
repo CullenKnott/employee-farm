@@ -155,7 +155,80 @@ function addRole() {
   });
 }
 
-function addEmployee() {}
+function addEmployee() {
+  let f_name, l_name, roleName, managerId;
+  inquirer
+    .prompt([
+      {
+        type: "Input",
+        name: "firstName",
+        message: "What is the new employee's first name?",
+      },
+      {
+        type: "input",
+        name: "lastName",
+        message: "What is their last name?",
+      },
+    ])
+    .then((response) => {
+      f_name = response.firstName;
+      l_name = response.lastName;
+      return db.promise().query("SELECT * FROM role");
+    })
+    .then((roleData) => {
+      console.log(roleData);
+      const roleChoices = roleData[0].map((role) => ({
+        value: role.id,
+        name: role.title,
+      }));
+      return inquirer.prompt([
+        {
+          type: "list",
+          name: "role",
+          message: "Choose a role for the new employee.",
+          choices: roleChoices,
+        },
+      ]);
+    })
+    .then((response) => {
+      roleName = response.role;
+      return db
+        .promise()
+        .query("SELECT * FROM employee WHERE manager_id IS NULL");
+    })
+    .then((mangData) => {
+      const managerChoices = mangData[0].map((employee) => ({
+        value: employee.id,
+        name: `${employee.first_name} ${employee.last_name}`,
+      }));
+      return inquirer.prompt([
+        {
+          type: "list",
+          name: "manager",
+          message: "Choose a manager for this employee",
+          choices: managerChoices,
+        },
+      ]);
+    })
+    .then((response) => {
+      managerId = response.manager;
+      console.log(
+        `Employee added: ${f_name} ${l_name}`
+      );
+      db.query(
+        `INSERT INTO employee
+        (first_name, last_name, role_id, manager_id)
+        VALUES
+        ('${f_name}',
+        '${l_name}',
+        '${roleName}',
+        '${managerId}')`,
+        function (err, res) {
+          err ? console.log(err) : viewAllEmployees(), prompt();
+        }
+      );
+    });
+}
 
 // 2 more add functions
 // update function
